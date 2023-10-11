@@ -496,4 +496,30 @@ class StompQueue extends Queue implements QueueInterface
             $this->subscribedTo[] = $queue;
         }
     }
+
+    /**
+     * Clear all jobs from the queue.
+     *
+     * @param string $queue
+     * @return int
+     */
+    public function clear($queue)
+    {
+        $count = 0;
+        
+        // Unsubscribe from the queue to prevent incoming jobs during clearing.
+        $this->client->unsubscribe($queue);
+
+        // Loop until there are no more messages in the queue.
+        while ($frame = $this->read($queue)) {
+            $this->client->ack($frame);
+
+            $count++;
+        }
+
+        // Subscribe back to the queue.
+        $this->client->subscribe($queue);
+
+        return $count;
+    }
 }
